@@ -9,6 +9,24 @@ const statusColors = {
     resolved: 'success'
 };
 
+const getDerivedStatus = (complaint) => {
+    const latestUpdateStatus = complaint.staffUpdates?.length
+        ? complaint.staffUpdates[complaint.staffUpdates.length - 1]?.status
+        : null;
+
+    if (latestUpdateStatus === 'resolved' || complaint.status === 'resolved') {
+        return 'resolved';
+    }
+
+    if (latestUpdateStatus === 'in-progress') {
+        return 'in-progress';
+    }
+
+    return complaint.staffUpdates && complaint.staffUpdates.length > 0
+        ? 'in-progress'
+        : 'pending';
+};
+
 const MyComplaints = () => {
 
     const [complaints, setComplaints] = useState([]);
@@ -44,9 +62,9 @@ const MyComplaints = () => {
 
         const statsData = {
             total: complaintsData.length,
-            pending: complaintsData.filter(c => c.status === 'pending').length,
-            inProgress: complaintsData.filter(c => c.status === 'in-progress').length,
-            resolved: complaintsData.filter(c => c.status === 'resolved').length
+            pending: complaintsData.filter(c => c.displayStatus === 'pending').length,
+            inProgress: complaintsData.filter(c => c.displayStatus === 'in-progress').length,
+            resolved: complaintsData.filter(c => c.displayStatus === 'resolved').length
         };
 
         setStats(statsData);
@@ -67,7 +85,8 @@ const MyComplaints = () => {
 
             const data = res.data.map(c => ({
                 ...c,
-                date: c.date || c.createdAt
+                date: c.date || c.createdAt,
+                displayStatus: getDerivedStatus(c)
             }));
 
             console.log('Fetched complaints:', data);
@@ -184,7 +203,7 @@ const MyComplaints = () => {
         .filter(c => {
 
             const matchesFilter =
-                filter === 'all' || c.status === filter;
+                filter === 'all' || c.displayStatus === filter;
 
             const matchesSearch =
                 c.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -403,9 +422,9 @@ const MyComplaints = () => {
                                     </h6>
 
                                     <span
-                                        className={`badge bg-${statusColors[c.status]}`}
+                                        className={`badge bg-${statusColors[c.displayStatus]}`}
                                     >
-                                        {c.status}
+                                        {c.displayStatus.replace('-', ' ')}
                                     </span>
 
                                 </div>
@@ -456,9 +475,54 @@ const MyComplaints = () => {
 
                                     )}
 
+                                    {c.staffUpdates && c.staffUpdates.length > 0 && (
+
+                                        <div className="mt-3">
+
+                                            <h6 className="mb-2">Staff Updates</h6>
+
+                                            <div className="border rounded p-2 bg-light">
+
+                                                {c.staffUpdates.map((update, index) => (
+
+                                                    <div
+                                                        key={index}
+                                                        className={`pb-2 mb-2 ${index !== c.staffUpdates.length - 1 ? 'border-bottom' : ''}`}
+                                                    >
+
+                                                        <div className="d-flex justify-content-between align-items-center mb-1">
+                                                            <small className="text-muted">
+                                                                {new Date(update.updatedAt).toLocaleString()}
+                                                            </small>
+                                                            <small className="text-muted">
+                                                                {update.updatedBy?.name || update.updatedBy?.email || 'Staff'}
+                                                            </small>
+                                                        </div>
+
+                                                        <p className="mb-1">{update.remarks}</p>
+
+                                                        {update.photoUrl && (
+                                                            <img
+                                                                src={update.photoUrl}
+                                                                alt="staff update"
+                                                                className="img-fluid rounded"
+                                                                style={{ maxHeight: '140px' }}
+                                                            />
+                                                        )}
+
+                                                    </div>
+
+                                                ))}
+
+                                            </div>
+
+                                        </div>
+
+                                    )}
+
                                     {/* Feedback */}
 
-                                    {c.status === 'resolved'
+                                    {c.displayStatus === 'resolved'
                                         && !hasFeedback(c._id)
                                         && !feedbackState[c._id]?.submitted && (
 

@@ -84,6 +84,12 @@ const complaintSchema = new mongoose.Schema(
 
     staffUpdates: [
         {
+            status: {
+                type: String,
+                enum: ['pending', 'in-progress', 'resolved'],
+                default: 'in-progress'
+            },
+
             photoUrl: {
                 type: String,
                 default: ''

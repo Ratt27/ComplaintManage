@@ -8,11 +8,30 @@ const statusColors = {
   'resolved': 'success'
 };
 
+const getDerivedStatus = (complaint) => {
+    const latestUpdateStatus = complaint.staffUpdates?.length
+        ? complaint.staffUpdates[complaint.staffUpdates.length - 1]?.status
+        : null;
+
+    if (latestUpdateStatus === 'resolved' || complaint.status === 'resolved') {
+        return 'resolved';
+    }
+
+    if (latestUpdateStatus === 'in-progress') {
+        return 'in-progress';
+    }
+
+    return complaint.staffUpdates && complaint.staffUpdates.length > 0
+        ? 'in-progress'
+        : 'pending';
+};
+
 const StaffDashboard = () => {
     const [complaints, setComplaints] = useState([]);
     const [selectedComplaint, setSelectedComplaint] = useState(null);
     const [remarks, setRemarks] = useState('');
     const [photo, setPhoto] = useState(null);
+    const [updateStatus, setUpdateStatus] = useState('in-progress');
     const [refresh, setRefresh] = useState(false);
     const [stats, setStats] = useState({ total: 0, pending: 0, inProgress: 0, resolved: 0 });
     const [filter, setFilter] = useState('all');
@@ -29,7 +48,8 @@ const StaffDashboard = () => {
     const normalizeComplaint = (complaint) => ({
         ...complaint,
         raisedBy: complaint.raisedBy || complaint.student,
-        assignedTo: complaint.assignedTo || complaint.assignedTeacher
+        assignedTo: complaint.assignedTo || complaint.assignedTeacher,
+        displayStatus: getDerivedStatus(complaint)
     });
 
     const fetchAssignedComplaints = async () => {
@@ -73,9 +93,9 @@ const StaffDashboard = () => {
     const calculateStats = (complaintsData) => {
         const stats = {
             total: complaintsData.length,
-            pending: complaintsData.filter(c => c.status === 'pending').length,
-            inProgress: complaintsData.filter(c => c.status === 'in-progress').length,
-            resolved: complaintsData.filter(c => c.status === 'resolved').length
+            pending: complaintsData.filter(c => c.displayStatus === 'pending').length,
+            inProgress: complaintsData.filter(c => c.displayStatus === 'in-progress').length,
+            resolved: complaintsData.filter(c => c.displayStatus === 'resolved').length
         };
         setStats(stats);
     };
@@ -84,6 +104,7 @@ const StaffDashboard = () => {
         setSelectedComplaint(complaint);
         setRemarks('');
         setPhoto(null);
+        setUpdateStatus(getDerivedStatus(complaint) === 'resolved' ? 'resolved' : 'in-progress');
     };
 
     const handleUpdate = async (e) => {
@@ -92,6 +113,7 @@ const StaffDashboard = () => {
         try {
         const formData = new FormData();
         formData.append('remarks', remarks);
+        formData.append('status', updateStatus);
         if (photo) formData.append('photo', photo);
         await submitStaffUpdate(selectedComplaint, formData);
         setSelectedComplaint(null);
@@ -119,7 +141,7 @@ const StaffDashboard = () => {
 
     const filteredAndSortedComplaints = complaints
         .filter(c => {
-            const matchesFilter = filter === 'all' || c.status === filter;
+            const matchesFilter = filter === 'all' || c.displayStatus === filter;
             const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 c.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 c.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -312,7 +334,7 @@ const StaffDashboard = () => {
                                             {c.title}
                                         </h6>
                                         <span className={`badge bg-${statusColors[c.status]}`}>
-                                            {c.status && c.status.replace('-', ' ')}
+                                            {c.displayStatus.replace('-', ' ')}
                                         </span>
                                     </div>
                                 </div>
@@ -388,8 +410,8 @@ const StaffDashboard = () => {
                                                     <p><strong>Title:</strong> {selectedComplaint.title}</p>
                                                     <p><strong>Category:</strong> {selectedComplaint.category}</p>
                                                     <p><strong>Status:</strong> 
-                                                        <span className={`badge bg-${statusColors[selectedComplaint.status]} ms-2`}>
-                                                            {selectedComplaint.status}
+                                                        <span className={`badge bg-${statusColors[selectedComplaint.displayStatus]} ms-2`}>
+                                                            {selectedComplaint.displayStatus.replace('-', ' ')}
                                                         </span>
                                                     </p>
                                                     <p><strong>Date:</strong> {new Date(selectedComplaint.date).toLocaleString()}</p>
@@ -419,6 +441,18 @@ const StaffDashboard = () => {
                                                     rows="4"
                                             required
                                         />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label fw-bold">Update Status</label>
+                                        <select
+                                            className="form-select"
+                                            value={updateStatus}
+                                            onChange={e => setUpdateStatus(e.target.value)}
+                                        >
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="resolved">Resolved</option>
+                                        </select>
+                                        <small className="text-muted">Set the final complaint state before submitting the update.</small>
                                     </div>
                                     <div className="mb-3">
                                                 <label className="form-label fw-bold">Progress Photo (optional)</label>

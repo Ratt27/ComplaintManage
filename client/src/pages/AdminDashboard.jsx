@@ -59,10 +59,15 @@ const AdminDashboard = () => {
 
             console.log("FULL API RESPONSE:", res.data);
 
-            // Handle array response properly
             const complaintsArray = Array.isArray(res.data)
                 ? res.data
-                : res.data.complaints || [];
+                : Array.isArray(res.data.complaints)
+                    ? res.data.complaints
+                    : [
+                        ...(res.data.pending || []),
+                        ...(res.data.inProgress || []),
+                        ...(res.data.resolved || [])
+                    ];
 
             // Group complaints manually
             const grouped = {

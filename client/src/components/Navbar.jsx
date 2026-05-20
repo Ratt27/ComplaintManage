@@ -19,7 +19,7 @@ const Navbar = ({ isLoggedIn, onLogout, userRole, userEmail, userInfo }) => {
             <div className="container-fluid">
                 <Link className="navbar-brand d-flex align-items-center" to="/">
                     <img src={logo} alt="Kongu Engineering College" height="40" className="me-2" />
-                    <span style={{ fontWeight: 700, letterSpacing: 1 }}>Kongu Engineering College</span>
+                    <span style={{ fontWeight: 700, letterSpacing: 1 }}>St. Thomas' Engineering College</span>
                 </Link>
                 
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

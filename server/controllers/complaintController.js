@@ -2,6 +2,8 @@ const Complaint = require('../models/Complaint');
 const User = require('../models/User');
 const { sendResolutionEmail } = require('../utils/mailer');
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // ===============================
 // CREATE COMPLAINT
 // ===============================
@@ -77,6 +79,7 @@ const getMyComplaints = async (req, res) => {
         })
             .populate('student', 'name email department')
             .populate('assignedTeacher', 'name email department')
+            .populate('staffUpdates.updatedBy', 'name email department')
             .sort({ date: -1 });
 
         console.log(
@@ -106,7 +109,8 @@ const getComplaintById = async (req, res) => {
 
         const complaint = await Complaint.findById(req.params.id)
             .populate('student', 'name email department')
-            .populate('assignedTeacher', 'name email department');
+            .populate('assignedTeacher', 'name email department')
+            .populate('staffUpdates.updatedBy', 'name email department');
 
         if (!complaint) {
             return res.status(404).json({
@@ -145,6 +149,7 @@ const getAllComplaints = async (req, res) => {
         const complaints = await Complaint.find()
             .populate('student', 'email name department')
             .populate('assignedTeacher', 'email name department')
+            .populate('staffUpdates.updatedBy', 'name email department')
             .sort({ date: -1 });
 
         const pending = complaints
@@ -167,6 +172,7 @@ const getAllComplaints = async (req, res) => {
         });
 
         res.json({
+            complaints,
             pending,
             inProgress,
             resolved
@@ -213,7 +219,6 @@ const assignComplaint = async (req, res) => {
                 assignedTeacher: staffId,
                 assignedTo: staffId,
                 department: staff.department,
-                status: 'in-progress',
                 updatedAt: Date.now()
             },
             { new: true }
@@ -364,15 +369,22 @@ const getAssignedComplaints = async (req, res) => {
             });
         }
 
+        const departmentRegex = new RegExp(
+            `^${escapeRegex((staff.department || '').trim())}$`,
+            'i'
+        );
+
         const complaints = await Complaint.find({
             $or: [
                 { assignedTeacher: staffId },
                 { assignedTo: staffId },
-                { department: staff.department }
+                { department: departmentRegex },
+                { category: departmentRegex }
             ]
         })
             .populate('student', 'name email department')
             .populate('assignedTeacher', 'name email department')
+            .populate('staffUpdates.updatedBy', 'name email department')
             .sort({ date: -1 });
 
         console.log(
@@ -403,7 +415,7 @@ const getAssignedComplaints = async (req, res) => {
 const staffUpdateComplaint = async (req, res) => {
     try {
 
-        const { remarks } = req.body;
+        const { remarks, status } = req.body;
 
         const photoUrl = req.file
             ? `/uploads/${req.file.filename}`
@@ -418,14 +430,21 @@ const staffUpdateComplaint = async (req, res) => {
         }
 
         complaint.staffUpdates.push({
+            status: status && ['pending', 'in-progress', 'resolved'].includes(status)
+                ? status
+                : 'in-progress',
             remarks,
             photoUrl,
             updatedAt: new Date(),
             updatedBy: req.user.id
         });
 
-        // Automatically set to in-progress
-        if (complaint.status === 'pending') {
+        const allowedStatuses = ['pending', 'in-progress', 'resolved'];
+
+        if (status && allowedStatuses.includes(status)) {
+            complaint.status = status;
+        } else if (complaint.status === 'pending') {
+            // Preserve the old behavior for updates that do not explicitly set a status.
             complaint.status = 'in-progress';
         }
 
