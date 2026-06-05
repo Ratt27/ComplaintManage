@@ -5,6 +5,9 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const complaintRoutes = require('./routes/complaint');
 const feedbackRoutes = require('./routes/feedback');
+const teachersRoutes = require('./routes/teachers');
+const teacherAssignmentsRoutes = require('./routes/teacherAssignments');
+const teacherFeedbackRoutes = require('./routes/teacherFeedback');
 const statsRoutes = require('./routes/stats');
 
 const app = express();
@@ -26,6 +29,9 @@ console.log('Registering routes...');
 app.use('/api/auth', authRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/teachers', teachersRoutes);
+app.use('/api/teacher-assignments', teacherAssignmentsRoutes);
+app.use('/api/teacher-feedback', teacherFeedbackRoutes);
 app.use('/api/stats', statsRoutes);
 
 // Start server only after successful DB connection

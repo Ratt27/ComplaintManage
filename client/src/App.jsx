@@ -9,6 +9,8 @@ import MyComplaints from './pages/MyComplaints';
 import ComplaintDetail from './pages/ComplaintDetail';
 import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
+import TeacherFeedback from './pages/TeacherFeedback';
+import TeacherFeedbackAdmin from './pages/TeacherFeedbackAdmin';
 import { jwtDecode } from 'jwt-decode';
 
 const App = () => {
@@ -94,6 +96,12 @@ const App = () => {
                 </Route>
                 <Route path="/complaints/:id">
                     {isLoggedIn && userRole !== 'admin' ? <ComplaintDetail /> : <Redirect to="/admin/dashboard" />}
+                </Route>
+                <Route path="/teacher-feedback">
+                    {isLoggedIn && userRole === 'student' ? <TeacherFeedback /> : <Redirect to="/login/student" />}
+                </Route>
+                <Route path="/admin/teacher-feedback">
+                    {isLoggedIn && userRole === 'admin' ? <TeacherFeedbackAdmin /> : <Redirect to="/login/admin" />}
                 </Route>
                 <Route path="/admin/dashboard">
                     {isLoggedIn && userRole === 'admin' ? <AdminDashboard /> : <Redirect to="/login/admin" />}

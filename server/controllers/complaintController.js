@@ -43,7 +43,8 @@ const createComplaint = async (req, res) => {
 
         const populatedComplaint = await Complaint.findById(complaint._id)
             .populate('student', 'name email department')
-            .populate('assignedTeacher', 'name email department');
+            .populate('assignedTeacher', 'name email department')
+            .populate('assignedTo', 'name email department');
 
         console.log(
             '[createComplaint] created complaint:',
@@ -79,6 +80,7 @@ const getMyComplaints = async (req, res) => {
         })
             .populate('student', 'name email department')
             .populate('assignedTeacher', 'name email department')
+            .populate('assignedTo', 'name email department')
             .populate('staffUpdates.updatedBy', 'name email department')
             .sort({ date: -1 });
 
@@ -110,6 +112,7 @@ const getComplaintById = async (req, res) => {
         const complaint = await Complaint.findById(req.params.id)
             .populate('student', 'name email department')
             .populate('assignedTeacher', 'name email department')
+            .populate('assignedTo', 'name email department')
             .populate('staffUpdates.updatedBy', 'name email department');
 
         if (!complaint) {
@@ -149,6 +152,7 @@ const getAllComplaints = async (req, res) => {
         const complaints = await Complaint.find()
             .populate('student', 'email name department')
             .populate('assignedTeacher', 'email name department')
+            .populate('assignedTo', 'email name department')
             .populate('staffUpdates.updatedBy', 'name email department')
             .sort({ date: -1 });
 
@@ -224,7 +228,8 @@ const assignComplaint = async (req, res) => {
             { new: true }
         )
             .populate('student', 'name email department')
-            .populate('assignedTeacher', 'name email department');
+            .populate('assignedTeacher', 'name email department')
+            .populate('assignedTo', 'name email department');
 
         if (!complaint) {
             return res.status(404).json({
@@ -369,21 +374,15 @@ const getAssignedComplaints = async (req, res) => {
             });
         }
 
-        const departmentRegex = new RegExp(
-            `^${escapeRegex((staff.department || '').trim())}$`,
-            'i'
-        );
-
         const complaints = await Complaint.find({
             $or: [
                 { assignedTeacher: staffId },
-                { assignedTo: staffId },
-                { department: departmentRegex },
-                { category: departmentRegex }
+                { assignedTo: staffId }
             ]
         })
             .populate('student', 'name email department')
             .populate('assignedTeacher', 'name email department')
+            .populate('assignedTo', 'name email department')
             .populate('staffUpdates.updatedBy', 'name email department')
             .sort({ date: -1 });
 

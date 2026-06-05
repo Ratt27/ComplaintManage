@@ -33,11 +33,16 @@ const AdminDashboard = () => {
         Authorization: `Bearer ${localStorage.getItem('token')}`
     });
 
-    const normalizeComplaint = (complaint) => ({
-        ...complaint,
-        raisedBy: complaint.raisedBy || complaint.student,
-        assignedTo: complaint.assignedTo || complaint.assignedTeacher
-    });
+    const normalizeComplaint = (complaint) => {
+        const assigned = (complaint.assignedTo && typeof complaint.assignedTo === 'object')
+            ? complaint.assignedTo
+            : complaint.assignedTeacher;
+        return {
+            ...complaint,
+            raisedBy: complaint.raisedBy || complaint.student,
+            assignedTo: assigned
+        };
+    };
 
     // =========================
     // FETCH COMPLAINTS

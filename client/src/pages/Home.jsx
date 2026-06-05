@@ -115,7 +115,9 @@ const Home = ({ userEmail, userRole }) => {
                                                 <button className="btn btn-info btn-lg" onClick={() => history.push('/my-complaints')}>
                                                     <i className="fas fa-list me-2"></i>My Complaints
                                                 </button>
-                                                
+                                                <button className="btn btn-success btn-lg" onClick={() => history.push('/teacher-feedback')}>
+                                                    <i className="fas fa-star me-2"></i>Teacher Feedback
+                                                </button>
                                             </>
                                         )}
                                         {userRole === 'staff' && (
@@ -124,9 +126,14 @@ const Home = ({ userEmail, userRole }) => {
                                             </button>
                                         )}
                                         {userRole === 'admin' && (
-                                            <button className="btn btn-primary btn-lg" onClick={() => history.push('/admin/dashboard')}>
-                                                <i className="fas fa-cog me-2"></i>Admin Dashboard
-                                            </button>
+                                            <>
+                                                <button className="btn btn-primary btn-lg" onClick={() => history.push('/admin/dashboard')}>
+                                                    <i className="fas fa-cog me-2"></i>Complaint Admin
+                                                </button>
+                                                <button className="btn btn-success btn-lg" onClick={() => history.push('/admin/teacher-feedback')}>
+                                                    <i className="fas fa-chart-bar me-2"></i>Feedback Admin
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>

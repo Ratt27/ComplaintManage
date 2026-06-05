@@ -93,6 +93,9 @@ const login = async (req, res) => {
         if (!user) {
             return res.status(400).json({ message: 'Email not found' });
         }
+        if (user.active === false) {
+            return res.status(403).json({ message: 'Account is inactive' });
+        }
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Incorrect password' });

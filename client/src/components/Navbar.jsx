@@ -36,9 +36,14 @@ const Navbar = ({ isLoggedIn, onLogout, userRole, userEmail, userInfo }) => {
                             
                             {/* Admin Navigation */}
                             {userRole === 'admin' && (
-                                <li className="nav-item me-3">
-                                    <Link className={`nav-link ${getActiveClass('/admin/dashboard')}`} to="/admin/dashboard">Dashboard</Link>
-                                </li>
+                                <>
+                                    <li className="nav-item me-3">
+                                        <Link className={`nav-link ${getActiveClass('/admin/dashboard')}`} to="/admin/dashboard">Dashboard</Link>
+                                    </li>
+                                    <li className="nav-item me-3">
+                                        <Link className={`nav-link ${getActiveClass('/admin/teacher-feedback')}`} to="/admin/teacher-feedback">Feedback Admin</Link>
+                                    </li>
+                                </>
                             )}
                             
                             {/* Staff Navigation */}
@@ -56,6 +61,9 @@ const Navbar = ({ isLoggedIn, onLogout, userRole, userEmail, userInfo }) => {
                                     </li>
                                     <li className="nav-item me-3">
                                         <Link className={`nav-link ${getActiveClass('/complaints/new')}`} to="/complaints/new">Submit Complaint</Link>
+                                    </li>
+                                    <li className="nav-item me-3">
+                                        <Link className={`nav-link ${getActiveClass('/teacher-feedback')}`} to="/teacher-feedback">Teacher Feedback</Link>
                                     </li>
                                 </>
                             )}

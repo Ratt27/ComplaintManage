@@ -40,17 +40,25 @@ const StaffDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [userInfo, setUserInfo] = useState(null);
     const [error, setError] = useState(null);
+    const [feedbackStatus, setFeedbackStatus] = useState(null);
+    const [feedbackStatusLoading, setFeedbackStatusLoading] = useState(false);
+    const [feedbackStatusError, setFeedbackStatusError] = useState('');
 
     const getAuthHeaders = () => ({
         Authorization: `Bearer ${localStorage.getItem('token')}`
     });
 
-    const normalizeComplaint = (complaint) => ({
-        ...complaint,
-        raisedBy: complaint.raisedBy || complaint.student,
-        assignedTo: complaint.assignedTo || complaint.assignedTeacher,
-        displayStatus: getDerivedStatus(complaint)
-    });
+    const normalizeComplaint = (complaint) => {
+        const assigned = (complaint.assignedTo && typeof complaint.assignedTo === 'object')
+            ? complaint.assignedTo
+            : complaint.assignedTeacher;
+        return {
+            ...complaint,
+            raisedBy: complaint.raisedBy || complaint.student,
+            assignedTo: assigned,
+            displayStatus: getDerivedStatus(complaint)
+        };
+    };
 
     const fetchAssignedComplaints = async () => {
         setLoading(true);
@@ -78,6 +86,12 @@ const StaffDashboard = () => {
         fetchProfile();
     }, [refresh]);
 
+    useEffect(() => {
+        if (userInfo?._id) {
+            fetchFeedbackStatus(userInfo._id);
+        }
+    }, [userInfo]);
+
     const fetchProfile = async () => {
         try {
             const res = await axios.get(`${API_BASE_URL}/api/auth/profile`, {
@@ -87,6 +101,25 @@ const StaffDashboard = () => {
         } catch (err) {
             console.error('[StaffDashboard] fetchProfile error:', err.response?.data || err.message);
             setError('Failed to fetch profile');
+        }
+    };
+
+    const fetchFeedbackStatus = async (teacherId) => {
+        if (!teacherId) return;
+
+        setFeedbackStatusLoading(true);
+        setFeedbackStatusError('');
+
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/feedback/teacher-status/${teacherId}`, {
+                headers: getAuthHeaders()
+            });
+            setFeedbackStatus(res.data);
+        } catch (err) {
+            console.error('[StaffDashboard] fetchFeedbackStatus error:', err.response?.data || err.message);
+            setFeedbackStatusError(err.response?.data?.message || 'Failed to fetch feedback status');
+        } finally {
+            setFeedbackStatusLoading(false);
         }
     };
 
@@ -249,6 +282,91 @@ const StaffDashboard = () => {
                             <p className="mb-0">Resolved</p>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div className="card shadow-sm border-0 mb-4">
+                <div className="card-body">
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+                        <div>
+                            <h4 className="mb-1" style={{ color: 'var(--primary-blue)' }}>Feedback Status</h4>
+                            <p className="text-muted mb-0">Summary of the teacher feedback you received.</p>
+                        </div>
+                        {feedbackStatusLoading && <span className="badge bg-info text-dark">Loading</span>}
+                    </div>
+
+                    {feedbackStatusError && <div className="alert alert-danger">{feedbackStatusError}</div>}
+
+                    {feedbackStatus ? (
+                        <div className="row g-3">
+                            <div className="col-md-3">
+                                <div className="card bg-primary text-white h-100">
+                                    <div className="card-body text-center">
+                                        <h3 className="mb-1">{feedbackStatus.totalFeedbacks}</h3>
+                                        <p className="mb-0">Total Feedbacks</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="col-md-3">
+                                <div className="card bg-success text-white h-100">
+                                    <div className="card-body text-center">
+                                        <h3 className="mb-1">{feedbackStatus.overallAverage}</h3>
+                                        <p className="mb-0">Overall Average</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="col-md-6">
+                                <div className="table-responsive">
+                                    <table className="table table-sm align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Criterion</th>
+                                                <th>Avg</th>
+                                                <th>Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {feedbackStatus.criterionWiseRatings?.map((item) => (
+                                                <tr key={item.criteriaId}>
+                                                    <td>{item.title}</td>
+                                                    <td>{item.averageRating}</td>
+                                                    <td>{item.totalRatings}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div className="col-md-6">
+                                <div className="card border-0 bg-light h-100">
+                                    <div className="card-body">
+                                        <h6 className="mb-3">Department-wise Average</h6>
+                                        {feedbackStatus.departmentWiseRatings?.map((item) => (
+                                            <div key={item.departmentId} className="d-flex justify-content-between mb-2">
+                                                <span>{item.departmentName}</span>
+                                                <strong>{item.averageRating}</strong>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="col-md-6">
+                                <div className="card border-0 bg-light h-100">
+                                    <div className="card-body">
+                                        <h6 className="mb-3">Semester-wise Average</h6>
+                                        {feedbackStatus.semesterWiseRatings?.map((item) => (
+                                            <div key={item.semester} className="d-flex justify-content-between mb-2">
+                                                <span>Semester {item.semester}</span>
+                                                <strong>{item.averageRating}</strong>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="alert alert-info mb-0">No feedback status available yet.</div>
+                    )}
                 </div>
             </div>
 
