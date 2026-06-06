@@ -59,6 +59,8 @@ const getAllFeedbacks = async (req, res) => {
     }
 };
 
+const cleanName = (name) => (name || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
 const getTeacherStatus = async (req, res) => {
     try {
         const { teacherId } = req.params;
@@ -73,15 +75,19 @@ const getTeacherStatus = async (req, res) => {
         let queryTeacherId = teacherObjectId;
 
         if (user) {
-            // Find the matching Teacher record by email or name (case-insensitive)
-            const teacherDoc = await Teacher.findOne({
-                $or: [
-                    { email: user.email },
-                    { name: { $regex: new RegExp("^" + user.name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "$", "i") } }
-                ]
+            // Fetch all registered teachers and find the closest match
+            const allTeachers = await Teacher.find({});
+            const cleanedUserName = cleanName(user.name);
+
+            const matchedTeacher = allTeachers.find((t) => {
+                if (t.email && user.email && t.email.toLowerCase().trim() === user.email.toLowerCase().trim()) {
+                    return true;
+                }
+                return cleanName(t.name) === cleanedUserName;
             });
-            if (teacherDoc) {
-                queryTeacherId = teacherDoc._id;
+
+            if (matchedTeacher) {
+                queryTeacherId = matchedTeacher._id;
             }
         }
 

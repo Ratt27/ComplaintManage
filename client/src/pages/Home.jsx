@@ -72,7 +72,7 @@ const Home = ({ userEmail, userRole }) => {
                         <div className="col-lg-6">
                             <h1 className="display-4 fw-bold mb-4">Smart Campus Complaint System</h1>
                             <h3 className="mb-4" style={{ color: '#FFD700' }}>St.Thomas' Engineering College</h3>
-                            <p className="lead mb-4">Empowering students, staff, and administrators with a transparent and efficient complaint management system. Experience seamless issue resolution and real-time tracking.</p>
+                            <p className="white mb-4">Empowering students, staff, and administrators with a transparent and efficient complaint management system. Experience seamless issue resolution and real-time tracking.</p>
                         {!userEmail && (
                                 <div className="d-flex gap-3">
                                     <button className="btn btn-warning btn-lg px-4" onClick={() => history.push('/login/student')}>
